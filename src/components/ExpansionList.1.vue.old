@@ -1,0 +1,62 @@
+<template>
+  <v-expansion-panel>
+    <v-expansion-panel-content v-for="(pCat,i) in pCategories" :key="i">
+      {{log("Inside", pCat)}}
+      <div slot="header" :key="pCat['jcr:title']">{{pCat['jcr:title']}}</div>
+      <v-card>
+        <v-expansion-panel>
+          <span v-for="(subCat, k) in getSubCat(pCat)" :key="k">
+            {{log("INSIDE 2", subCat)}}
+          </span>
+
+
+
+          {{
+            Object.keys( pCat ).forEach( key => {
+              if (key.match("^[^:]*$")) {
+                log("INSIDE 2", pCat[key])
+                pushToSubCat(pCat[key])
+                '<p>m</p>'
+              }
+            })
+          }}
+          <!-- <v-expansion-panel-content v-for="(subCategory,i) in subCat" :key="i">
+            <div slot="header">{subCat['jcr:title']}</div>
+            <v-card>
+              <v-card-text>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</v-card-text>
+            </v-card>
+          </v-expansion-panel-content> -->
+        </v-expansion-panel>
+      </v-card>
+    </v-expansion-panel-content>
+  </v-expansion-panel>
+</template>
+
+
+
+<script>
+export default {
+  name: 'ExpansionList',
+  data: () => {
+    return {
+      subCat: [5, 6],
+    }
+  },
+  props: ['pCategories'],
+  methods: {
+    log: (identifier, something) => {
+      console.log(identifier, something)
+    },
+    pushToSubCat: (value) => {
+      console.log("SUBCAT",value)
+      // console.log("SUBCAT",subCat)
+      console.log("this inside 2",this)
+      this.subCat.push(value)
+    },
+    getSubCat: (value) => {
+      return Object.keys(value)
+    }
+  }
+}
+</script>
+

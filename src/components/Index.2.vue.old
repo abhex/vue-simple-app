@@ -1,0 +1,247 @@
+<template>
+  <v-app id="inspire">
+     <!-- // Nav Drawer -->
+    <v-navigation-drawer
+      fixed
+      v-model="drawer"
+      app
+    >
+      <v-list dense>
+        <v-list-tile @click="">
+          <v-list-tile-action>
+            <v-icon>layers</v-icon>
+          </v-list-tile-action>
+          <v-list-tile-content>
+            <v-list-tile-title>Categories</v-list-tile-title>
+          </v-list-tile-content>
+        </v-list-tile>
+        <v-expansion-panel>
+          <v-expansion-panel-content v-for="(pCat,i) in parentCat" :key="i">
+            {{log("Inside", pCat)}}
+            <div slot="header" :key="pCat['jcr:title']">{{pCat['jcr:title']}}</div>
+            <v-card>
+              <v-expansion-panel focusable>
+                <div v-for="(subCat, k) in getSubCat(pCat)" :key="k">
+                  {{log("INSIDE 2", subCat)}}
+                  <v-expansion-panel-content >
+                    <div v-on:click="changeProducts(subCat['jcr:title'])" slot="header" :key="subCat['jcr:title']">{{subCat['jcr:title']}}</div>
+                  </v-expansion-panel-content>
+                </div>
+              </v-expansion-panel>
+            </v-card>
+          </v-expansion-panel-content>
+        </v-expansion-panel>
+      </v-list>
+    </v-navigation-drawer>
+
+    <!-- // Right Content -->
+    <v-toolbar color="indigo" dark fixed app>
+      <v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon>
+      <v-toolbar-title>Products</v-toolbar-title>
+    </v-toolbar>
+    <v-content>
+      <v-container fluid fill-height>
+        <v-layout
+          justify-center
+          align-center
+        >
+          <v-flex text-xs-center>
+            <v-card>
+              <v-container fluid grid-list-md>
+                <v-layout row wrap>
+                  <v-flex
+                    v-bind="{ [`xs4`]: true }"
+                    v-for="product in products"
+                    :key="product.title"
+                  >
+                    <v-card>
+                      <v-card-media
+                        v-if="product.image && product.image.fileReference"
+                        :src="'http://192.168.100.28:4503' + product.image.fileReference"
+                        height="200px"
+                      >
+                        <!-- <v-container fill-height fluid>
+                          <v-layout fill-height>
+                            <v-flex xs12 align-end flexbox>
+                              <span class="headline white--text" v-text="product['jcr:title']"/>
+                            </v-flex>
+                          </v-layout>
+                        </v-container> -->
+                      </v-card-media>
+                      <v-card-title primary-title>
+                        <div>
+                          <div class="headline">{{product['jcr:title']}}</div>
+                          <!-- <span class="grey--text">1,000 miles of wonder</span> -->
+                        </div>
+                      </v-card-title>
+                      <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn icon>
+                          <v-icon>favorite</v-icon>
+                        </v-btn>
+                        <v-btn icon>
+                          <v-icon>bookmark</v-icon>
+                        </v-btn>
+                        <v-btn icon>
+                          <v-icon>share</v-icon>
+                        </v-btn>
+                        <v-btn icon @click.native="show = !show">
+                          <v-icon>{{ show ? 'keyboard_arrow_down' : 'keyboard_arrow_up' }}</v-icon>
+                        </v-btn>
+                      </v-card-actions>
+                      <v-slide-y-transition>
+                        <v-card-text v-show="show" v-html="product['features']">
+                          
+                        </v-card-text>
+                      </v-slide-y-transition>
+                    </v-card>
+                  </v-flex>
+                </v-layout>
+              </v-container>
+            </v-card>
+          </v-flex>
+        </v-layout>
+      </v-container>
+    </v-content>
+    
+    <!-- // Footer -->
+    <!-- <v-footer color="indigo" app>
+      <span class="white--text">&copy; 2017</span>
+    </v-footer> -->
+  </v-app>
+</template>
+
+<script>
+import ExpansionList from '../components/ExpansionList'
+import EventBus from '../event-bus'
+import * as JsonLoaded from '../../static/products.json';
+// const readJsonSync = require('read-json-sync');
+
+export default {
+  name: 'Index',
+  data() {
+    return {
+      drawer: null,
+      source: null,
+      parentCat: [],
+      subCat: [],
+      products: [],
+      cards: [
+      { title: 'Pre-fab homes', src: 'https://vuetifyjs.com/static/doc-images/cards/house.jpg', flex: 4 },
+      { title: 'Favorite road trips', src: 'https://vuetifyjs.com/static/doc-images/cards/road.jpg', flex: 4 },
+      { title: 'Best airlines', src: 'https://vuetifyjs.com/static/doc-images/cards/plane.jpg', flex: 4 }
+      ],
+      show: true
+    }
+  },
+  methods: {
+    loadJSON: function(callback) {
+      var xobj = new XMLHttpRequest()
+      xobj.overrideMimeType("application/json")
+      xobj.open('GET', '/static/products.json', true);
+      xobj.onreadystatechange = function () {
+            if (xobj.readyState == 4 && xobj.status == "200") {
+              // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
+              callback(xobj.responseText);
+            }
+      };
+      xobj.send(null)
+    },
+    keysThatMatch: function (data) {
+      console.log("KEYS THAT MATCH")
+      let pattern = "^[^:]*$"
+      return Object.keys(data).filter(key => key.match(pattern))
+    },
+    log: (something) => {
+      console.log(something)
+    },
+    changeProducts: function(someData) {
+      console.log("NEWWWWW",someData)
+      console.log("SUBACAT", this)
+      console.log("This is absurd", this.products)
+      // console.log(this.data.products)
+      for(var sVal of this.subCat){
+        if (sVal['jcr:title'] == someData){
+          console.log("Ohhhh they match")
+          this.products = []
+          Object.keys( sVal ).forEach( key => {
+              if (key.match("^[^:]*$")) {
+                this.products.push(sVal[key])
+              }
+            })
+        }
+      }
+    },
+    getSubCat: (obj) => {
+      let subCat = []
+      Object.keys( obj ).forEach( key => {
+              if (key.match("^[^:]*$")) {
+                subCat.push(obj[key])
+              }
+            })
+      return subCat
+    }
+  },
+  // mounted: () =>
+  // { 
+  //   EventBus.$on('myEvent', (someData)=>{
+  //     console.log(this.data)
+  //     console.log("INSIDE PARENT", someData)
+  //     for(var sVal of someData.data.subCat){
+  //       if (sVal['jcr:title'] == someData.data.subCatKey){
+  //         console.log("Ohhhh they match")
+  //         this.products = sVal
+  //       }
+  //     }
+  //     // console.log("NEW KEYSsss",Object.keys(this.subCat))
+  //     // console.log(this.subCat.hasOwnProperty(someData.data))
+  //   })
+  // },
+  mounted() {
+    
+    
+    // let jsonresponse = jsonreadJsonSync('/Users/kwanso-ios/Documents/Projects/vue-aem/static/products.json');
+  
+    let jsonresponse = JsonLoaded  
+    console.log(jsonresponse)
+    console.log("WHATTT")
+    let keys = this.keysThatMatch(jsonresponse)
+    
+    Object.keys(jsonresponse).forEach( key => {
+      let pattern = "^[^:]*$"
+      if (key.match(pattern)){
+        console.log( "black", jsonresponse[key] );
+        this.parentCat.push(jsonresponse[key])
+        Object.keys( jsonresponse[key] ).forEach( key2 => {
+          if (key2.match(pattern)) {
+            console.log( jsonresponse[key][key2])
+            Object.keys( jsonresponse[key][key2] ).forEach( key3 => {
+              if (key3.match(pattern)) {
+                console.log( jsonresponse[key][key2][key3])
+              }
+            })
+          }
+        })
+      }
+    });
+    
+    for(var val of keys){
+      // self.parentCat.push(jsonresponse[val])
+      let suKeys = this.keysThatMatch(jsonresponse[val])
+      for(var va of suKeys){
+        this.subCat.push(jsonresponse[val][va])
+        let prodKeys = this.keysThatMatch(jsonresponse[val][va])
+        for(var pk of prodKeys){
+          this.products.push(jsonresponse[val][va][pk])
+        }
+      }
+    }
+      
+    }
+  
+}
+</script>
+
+
+
+// let arr = Object.keys(obj).map((k) => obj[k])
